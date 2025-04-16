@@ -1,22 +1,31 @@
 import { NextResponse } from 'next/server';
 
-// Clave API de Claude colocada directamente en el archivo
-const CLAUDE_API_KEY = "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";
-
 export async function POST(request) {
   try {
-    // Obtener el cuerpo de la solicitud
+    // Get the Claude API key from environment variables
+    const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
+    
+    // Check if API key exists
+    if (!CLAUDE_API_KEY) {
+      console.error('API key not found in environment variables');
+      return NextResponse.json(
+        { error: 'API configuration error' },
+        { status: 500 }
+      );
+    }
+
+    // Get request body
     const body = await request.json();
     
-    // Validar que hay mensajes
+    // Validate messages
     if (!body.messages || !Array.isArray(body.messages)) {
       return NextResponse.json(
-        { error: 'Se requieren mensajes válidos' },
+        { error: 'Valid messages are required' },
         { status: 400 }
       );
     }
     
-    // Realizar la solicitud a la API de Claude
+    // Make request to Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -31,28 +40,28 @@ export async function POST(request) {
       })
     });
 
-    // Manejar errores de la API
+    // Handle API errors
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Error de la API de Claude:', errorData);
+      console.error('Claude API error:', errorData);
       return NextResponse.json(
-        { error: 'Error en la respuesta de Claude API' },
+        { error: 'Error in Claude API response' },
         { status: response.status }
       );
     }
 
-    // Procesar la respuesta exitosa
+    // Process successful response
     const data = await response.json();
     
-    // Comprobar si hay contenido en la respuesta
+    // Check if response has content
     if (!data.content || data.content.length === 0) {
       return NextResponse.json(
-        { error: 'Respuesta sin contenido de Claude' },
+        { error: 'Empty response from Claude' },
         { status: 500 }
       );
     }
 
-    // Extraer el texto de la respuesta
+    // Extract response text
     const responseText = data.content[0].text;
     
     return NextResponse.json({ 
@@ -63,9 +72,9 @@ export async function POST(request) {
     });
     
   } catch (error) {
-    console.error('Error en la API de Claude:', error);
+    console.error('Error in Claude API:', error);
     return NextResponse.json(
-      { error: 'Error al procesar la solicitud' },
+      { error: 'Error processing request' },
       { status: 500 }
     );
   }
